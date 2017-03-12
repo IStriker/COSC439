@@ -10,6 +10,38 @@
 #define TRUE 1
 #define FALSE 0
 
+/* client message struct */
+typedef struct {
+    
+    enum {
+        FirstLogin, Login, Follow, Post, Search,
+        Receive, Delete, Unfollow, Logout, LoggedIn
+    } request_type;                     /* same size as unsigned int */
+    
+    unsigned int rquest_id;                      /* request client sends */
+    
+    unsigned int UserID;                /* unique client identifier */
+    
+    unsigned int LeaderID;              /* unique client indentifiere */
+    
+    char message[140];
+    
+} ClientMessage;
+
+typedef struct{
+    
+    unsigned int LeaderID ;  /* unique client identifier */
+    
+    /* store users following, by default its all zeros*/
+    int following[10];
+    
+    unsigned int UserID;    /* unique user id */
+    
+    char message[140];    /* text message */
+    
+}ServerMessage;
+
+//
 void DieWithError(char *errorMessage);  /* External error handling function */
 void login(ClientMessage *);
 void menu(ClientMessage *);
@@ -17,9 +49,13 @@ int is_first_login();
 int ask_for_id(char*);
 void display_sample_leaders();
 void display_updated_list(ServerMessage *, int);
+void post(char *);
+void clear_buffer();
+
 
 int main(int argc, char *argv[])
 {
+    
     int sock;                        /* Socket descriptor */
     struct sockaddr_in echoServAddr; /* Echo server address */
     struct sockaddr_in fromAddr;     /* Source address of echo */
@@ -96,10 +132,10 @@ int main(int argc, char *argv[])
         
         /* check if login success or not */
         if(strcmp(recieve_message.message, "Login success") == 0){
-            printf("Connection established\n");
+            printf("\nConnection established\n");
         }
         else if(strcmp(recieve_message.message, "Login fail") == 0){
-            printf("Connection failed, please try again\n");
+            printf("\nerror: Connection failed, please try again\n");
             send_message.request_type = Logout;
         }
         else if(strcmp(recieve_message.message, "Follow success") == 0){
@@ -107,16 +143,15 @@ int main(int argc, char *argv[])
             display_updated_list(&recieve_message, size);
         }
         else if(strcmp(recieve_message.message, "Follow failed") == 0){
-            display_sample_leaders();
-            send_message.LeaderID = ask_for_id("Please enter id of leader to follow: ");
-            continue;
+            printf("\nerror: Id already in leader list or does not exist\n");
         }
         
         //menu(&send_message);
     }//end while
     
     
-    
+    free(&send_message);
+    free(&recieve_message);
     close(sock);
     exit(0);
 }
@@ -161,8 +196,11 @@ int ask_for_id(char *msg){
  * @param options the options represented by enum
  */
 void menu(ClientMessage *send_message){
+ 
+start_menu:;
     
     int input, choice;
+    
     printf("----------------------------------------------------------------\n");
     printf("----------------------------------------------------------------\n\n");
     printf("Please choose an option from the following menu\n\n");
@@ -198,7 +236,10 @@ void menu(ClientMessage *send_message){
             send_message->LeaderID = ask_for_id("Please enter id of leader to follow: ");
             break;
         case 3:     /* post */
-            send_message->request_type = Post; break;
+            send_message->request_type = Post;
+            post(send_message->message);
+            printf("message after post: %s\n", send_message->message);
+            break;
         case 4:
             send_message->request_type = Receive; break;
         case 5:
@@ -212,6 +253,9 @@ void menu(ClientMessage *send_message){
         case 9:
             exit(0);break;
         default:
+            printf("Invlaid choice, please try again\n");
+            getchar();
+            goto start_menu;
             break;
             
     }
@@ -226,6 +270,7 @@ void menu(ClientMessage *send_message){
 void display_sample_leaders(){
     
     int i;
+    printf("\n\n");
     int size = sizeof(sample_leaders_ids) / sizeof(int);
     for(i = 0; i < size; i++)
         printf("leader id: %d\n", sample_leaders_ids[i]);
@@ -248,4 +293,52 @@ void display_updated_list(ServerMessage *recieve_message, int size){
             printf("Leader ID: %d\n", recieve_message->following[i]);
     }
     
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * asks a user for the post message and
+ * validates that it is no longer than 140 
+ * characters
+ * @param message where the message will go
+ */
+void post(char *message){
+
+start_post:;
+    
+    char input[140];
+    printf("Please enter the message you would like to post: ");
+    
+    char c;
+    int i = 0;
+    while((c = getchar()) != '\n' && c != EOF){
+        input[i] = c;
+        i++;
+    }
+    
+    printf("input after read: %s\n", input);
+    int length = strlen(input);
+    input[length] = '\0';
+    if(length > ECHOMAX){
+        printf("Your message exceeded the limit, please try again\n");
+        goto start_post;
+    }
+    
+    strcpy(message, input);
+    
+    //clear read buuffer
+    clear_buffer();
+
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * clears read buffer
+ */
+void clear_buffer(){
+    
+    char c;
+    while ((c = getchar()) != '\n' && c != EOF) { }
 }

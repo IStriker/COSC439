@@ -5,36 +5,6 @@
 #include <string.h>     /* for memset() */
 #include <unistd.h>     /* for close() */
 
-/* client message struct */
-typedef struct {
-    
-    enum {
-        FirstLogin, Login, Follow, Post, Search,
-        Receive, Delete, Unfollow, Logout, LoggedIn
-    } request_type;                     /* same size as unsigned int */
-    
-    unsigned int rquest_id;                      /* request client sends */
-    
-    unsigned int UserID;                /* unique client identifier */
-    
-    unsigned int LeaderID;              /* unique client indentifiere */
-    
-    char message[140];
-    
-} ClientMessage;
-
-typedef struct{
-    
-    unsigned int LeaderID ;  /* unique client identifier */
-    
-    /* store users following, by default its all zeros*/
-    int following[10];
-    
-    unsigned int UserID;    /* unique user id */
-    
-    char message[140];    /* text message */
-    
-}ServerMessage;
 
 /* list of sample users you can follow 
  * these users exist in server with sample
@@ -44,3 +14,12 @@ typedef struct{
  * and retrieve their info while application is running.
  */
 int sample_leaders_ids[5] = {70, 75, 80, 85, 90};
+
+/* table of logged in users
+ */
+int logged_in_users[10], append_logged_in_index = 0;
+
+/* store all users ids */
+int user_ids[10] = {70, 75, 80, 85, 90};
+int append_users_index = 5;         /* store user ids and append index */
+

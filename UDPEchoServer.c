@@ -11,19 +11,50 @@
 #define TRUE 1
 #define FALSE 0
 
+/* client message struct */
+typedef struct {
+    
+    enum {
+        FirstLogin, Login, Follow, Post, Search,
+        Receive, Delete, Unfollow, Logout, LoggedIn
+    } request_type;                     /* same size as unsigned int */
+    
+    unsigned int rquest_id;                      /* request client sends */
+    
+    unsigned int UserID;                /* unique client identifier */
+    
+    unsigned int LeaderID;              /* unique client indentifiere */
+    
+    char message[140];
+    
+} ClientMessage;
+
+typedef struct{
+    
+    unsigned int LeaderID ;  /* unique client identifier */
+    
+    /* store users following, by default its all zeros*/
+    int following[10];
+    
+    unsigned int UserID;    /* unique user id */
+    
+    char message[140];    /* text message */
+    
+}ServerMessage;
+
 
 void DieWithError(char *errorMessage);  /* External error handling function */
 
 
-int user_ids[20], append_users_index = 0;         /* store user ids and append index */
-int logged_in_users[10], append_logged_in_index = 0; /*to store list of logged in users */
 void check_options(ServerMessage*, ClientMessage*);
 void login(char*, unsigned int);
 int generate_id();
 int update_followers(int *, int, unsigned int);
 
+
 int main(int argc, char *argv[])
 {
+    
     int sock;                        /* Socket */
     struct sockaddr_in echoServAddr; /* Local address */
     struct sockaddr_in echoClntAddr; /* Client address */
@@ -33,6 +64,8 @@ int main(int argc, char *argv[])
 
     ServerMessage send_message;     /* struct for sending */
     ClientMessage recieve_message;  /* struct for recieveing */
+    
+    
     
     /* initialize following array to default values*/
     int i;
@@ -72,7 +105,6 @@ int main(int argc, char *argv[])
             (struct sockaddr *) &echoClntAddr, &cliAddrLen)) < 0)
             DieWithError("Server: recvfrom() failed");
         
-        
         printf("Handling client %s\n", inet_ntoa(echoClntAddr.sin_addr));
         check_options(&send_message, &recieve_message);
         
@@ -94,12 +126,15 @@ int main(int argc, char *argv[])
 void check_options(ServerMessage *send_message, ClientMessage *recieve_message){
     
     if(recieve_message->request_type == Login){                          /* if login */
-        login(send_message->message, send_message->UserID);
+        login(send_message->message, recieve_message->UserID);
+        if(strcmp(send_message->message, "Login success") == 0){
+            send_message->UserID = recieve_message->UserID;
+        }
     }
     else if(recieve_message->request_type == FirstLogin){               /* if first login */
         send_message->UserID = generate_id();
-        strcpy(send_message->message, "Logged in");
-            
+        strcpy(send_message->message, "Login success");
+        
         
     }
     else if(recieve_message->request_type == Follow){                    /* if follow */
@@ -133,11 +168,12 @@ void login(char *word, unsigned int id){
     int i;
     int size = sizeof(user_ids) / sizeof(int);
     for(i = 0; i < size; i++){
+        
         if(id == user_ids[i]){
             strcpy(word, "Login success");
             int length = strlen(word);
             word[length] = '\0';
-            
+            return;
         }
     }
     
@@ -162,10 +198,6 @@ int generate_id(){
     //size of array
     int size_user_ids = sizeof(user_ids) / sizeof(int);
     int size_sample_leaders = sizeof(sample_leaders_ids) / sizeof(int);
-    
-    //check for duplicates
-    if(exist(sample_leaders_ids, size_sample_leaders, id))
-        generate_id();
     
     if(exist(user_ids, size_user_ids, id))
         generate_id();
@@ -194,8 +226,7 @@ int update_followers(int *array, int size, unsigned int leader_id){
     int size_sample_leaders = sizeof(sample_leaders_ids) / sizeof(int);
     
     //check if user exist in sample_leaders_ids array
-    if(!exist(sample_leaders_ids, size_sample_leaders, leader_id) &&
-              !exist(user_ids, size_user_ids, leader_id))
+    if(!exist(user_ids, size_user_ids, leader_id))
               return FALSE;
     
     //check if user already in list
