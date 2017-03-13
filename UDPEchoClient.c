@@ -12,33 +12,33 @@
 
 /* client message struct */
 typedef struct {
-    
+
     enum {
         FirstLogin, Login, Follow, Post, Search,
         Receive, Delete, Unfollow, Logout, LoggedIn
     } request_type;                     /* same size as unsigned int */
-    
+
     unsigned int rquest_id;                      /* request client sends */
-    
+
     unsigned int UserID;                /* unique client identifier */
-    
+
     unsigned int LeaderID;              /* unique client indentifiere */
-    
+
     char message[140];
-    
+
 } ClientMessage;
 
 typedef struct{
-    
+
     unsigned int LeaderID ;  /* unique client identifier */
-    
+
     /* store users following, by default its all zeros*/
     int following[10];
-    
+
     unsigned int UserID;    /* unique user id */
-    
+
     char message[140];    /* text message */
-    
+
 }ServerMessage;
 
 //
@@ -55,7 +55,7 @@ void clear_buffer();
 
 int main(int argc, char *argv[])
 {
-    
+
     int sock;                        /* Socket descriptor */
     struct sockaddr_in echoServAddr; /* Echo server address */
     struct sockaddr_in fromAddr;     /* Source address of echo */
@@ -64,11 +64,11 @@ int main(int argc, char *argv[])
     char *servIP;                    /* IP address of server */
     char *echoString;                /* String to send to echo server */
     int echoStringLen;               /* Length of string to echo */
-    
+
     ClientMessage send_message;              /* struct for sending */
     ServerMessage recieve_message;           /* struct for reciveing */
-    
-    
+
+
     if ((argc < 3) || (argc > 4))    /* Test for correct number of arguments */
     {
         fprintf(stderr,"Usage: %s <Server IP> <Echo Word> [<Echo Port>]\n", argv[0]);
@@ -77,9 +77,9 @@ int main(int argc, char *argv[])
 
     servIP = argv[1];           /* First arg: server IP address (dotted quad) */
     strcpy(send_message.message, argv[2]);       /* Second arg: string to echo */
-    
 
-    
+
+
     if((strlen(send_message.message)) > ECHOMAX)   /* Check input length */
         DieWithError("Echo word too long");
 
@@ -97,20 +97,20 @@ int main(int argc, char *argv[])
     echoServAddr.sin_family = AF_INET;                 /* Internet addr family */
     echoServAddr.sin_addr.s_addr = inet_addr(servIP);  /* Server IP address */
     echoServAddr.sin_port   = htons(echoServPort);     /* Server port */
-    
+
     /*check if user sent login request when program is first launched*/
     send_message.request_type = Logout;
-    
+
     printf("----------------------------------------------------------------\n");
     printf("----------------------------------------------------------------\n\n");
     printf("Please login first\n\n");
-    
+
     /* infinite loop */
     while(TRUE){
-        
-        
+
+
         menu(&send_message);
-       
+		
         /* Send the string to the server */
         if (sendto(sock, (ClientMessage*)&send_message, sizeof(send_message), 0, (struct sockaddr*)&echoServAddr, sizeof(echoServAddr)) != sizeof(send_message))
             DieWithError("Client: sendto() sent a different number of bytes than expected");
@@ -129,7 +129,7 @@ int main(int argc, char *argv[])
 
         printf("Received: %s\n", recieve_message.message);    /* Print the echoed arg *///
         printf("user id:  %d\n", recieve_message.UserID);
-        
+
         /* check if login success or not */
         if(strcmp(recieve_message.message, "Login success") == 0){
             printf("\nConnection established\n");
@@ -145,11 +145,11 @@ int main(int argc, char *argv[])
         else if(strcmp(recieve_message.message, "Follow failed") == 0){
             printf("\nerror: Id already in leader list or does not exist\n");
         }
-        
+
         //menu(&send_message);
     }//end while
-    
-    
+
+
     free(&send_message);
     free(&recieve_message);
     close(sock);
@@ -163,15 +163,15 @@ int main(int argc, char *argv[])
  * @return whether it is true or false
  */
 int is_first_login(){
-    
+
     char input[5];
     printf("Do you have a user id ((yes or YES) or (no or NO)): ");
     scanf("%s", input);
-    
+
     if(strcmp(input, "NO") == 0 || strcmp(input, "no") == 0)
         return TRUE;
     return FALSE;
-    
+
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -196,11 +196,11 @@ int ask_for_id(char *msg){
  * @param options the options represented by enum
  */
 void menu(ClientMessage *send_message){
- 
+
 start_menu:;
-    
+
     int input, choice;
-    
+
     printf("----------------------------------------------------------------\n");
     printf("----------------------------------------------------------------\n\n");
     printf("Please choose an option from the following menu\n\n");
@@ -209,13 +209,13 @@ start_menu:;
     printf("\n6: Delete a posted message\n7: Unfollow one or more leaders\n8: logout");
     printf("\n9: Quit the client program\nEnter your choice here: ");
     scanf("%d", &input);
-    
+
     //check user choice
     switch(input){
         case 1:     /* login */
-            
+
             if(send_message->request_type == Logout){
-                
+
                 if(is_first_login()){
                     send_message->request_type = FirstLogin;
                     return;
@@ -227,7 +227,7 @@ start_menu:;
                 }
 
             }
-            
+
             send_message->request_type = LoggedIn;
             break;
         case 2:     /* follow */
@@ -238,7 +238,6 @@ start_menu:;
         case 3:     /* post */
             send_message->request_type = Post;
             post(send_message->message);
-            printf("message after post: %s\n", send_message->message);
             break;
         case 4:
             send_message->request_type = Receive; break;
@@ -257,9 +256,9 @@ start_menu:;
             getchar();
             goto start_menu;
             break;
-            
+
     }
-    
+
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -268,7 +267,7 @@ start_menu:;
  * displays the sample leaders id's
  */
 void display_sample_leaders(){
-    
+
     int i;
     printf("\n\n");
     int size = sizeof(sample_leaders_ids) / sizeof(int);
@@ -284,7 +283,7 @@ void display_sample_leaders(){
  * @param size the size of the list
  */
 void display_updated_list(ServerMessage *recieve_message, int size){
-    
+
     int i;
     printf("--------------------------------------------------------\n\n");
     printf("Updated following list\n");
@@ -292,43 +291,37 @@ void display_updated_list(ServerMessage *recieve_message, int size){
         if(recieve_message->following[i] != 0)
             printf("Leader ID: %d\n", recieve_message->following[i]);
     }
-    
+
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
 
 /**
  * asks a user for the post message and
- * validates that it is no longer than 140 
+ * validates that it is no longer than 140
  * characters
  * @param message where the message will go
  */
 void post(char *message){
 
 start_post:;
-    
+
+    //clear buffer
+    clear_buffer();
     char input[140];
     printf("Please enter the message you would like to post: ");
-    
-    char c;
-    int i = 0;
-    while((c = getchar()) != '\n' && c != EOF){
-        input[i] = c;
-        i++;
-    }
-    
-    printf("input after read: %s\n", input);
+    scanf("%[^\n]%*c", input);
+
     int length = strlen(input);
     input[length] = '\0';
     if(length > ECHOMAX){
         printf("Your message exceeded the limit, please try again\n");
         goto start_post;
     }
-    
+
     strcpy(message, input);
-    
-    //clear read buuffer
-    clear_buffer();
+
+
 
 }
 
@@ -338,7 +331,7 @@ start_post:;
  * clears read buffer
  */
 void clear_buffer(){
-    
+
     char c;
     while ((c = getchar()) != '\n' && c != EOF) { }
 }
