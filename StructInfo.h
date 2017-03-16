@@ -5,23 +5,51 @@
 #include <string.h>     /* for memset() */
 #include <unistd.h>     /* for close() */
 
+/* client message struct */
+typedef struct {
+
+    enum {
+        FirstLogin, Login, Follow, Post, Search,
+        Receive, Delete, Unfollow, Logout, LoggedIn
+    } request_type;                     /* same size as unsigned int */
+
+    unsigned int rquest_id;                      /* request client sends */
+
+    unsigned int UserID;                /* unique client identifier */
+
+    unsigned int LeaderID;              /* unique client indentifiere */
+
+    char message[140];
+
+} ClientMessage;
+
+typedef struct{
+
+    unsigned int LeaderID ;  /* unique client identifier */
+
+    /* store users following, by default its all zeros*/
+    int following[10];
+
+    unsigned int UserID;    /* unique user id */
+
+    char message[140];    /* text message */
+
+}ServerMessage;
+
 
 /* list of sample users you can follow 
  * these users exist in server with sample
- * posted messages you can retrieve.
- * Of course if you login with multiple users to server
- * and know the userID's of these users you can follow these users
- * and retrieve their info while application is running.
+ * 
  */
-int sample_leaders_ids[11] = {0, 1, 2, 3, 4, 5};
+int sample_leaders_ids[10] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
 
 /* table of logged in users
  */
 int logged_in_users[10], append_logged_in_index = 0;
 
 /* store all users ids */
-int user_ids[11] = {0, 1, 2, 3, 4, 5};
-int append_users_index = 6;         /* store user ids and append index */
+int user_ids[11] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+int append_users_index = 5;         /* store user ids and append index */
 
 char posted_messages[10][10];
 int posted_index = 0;
