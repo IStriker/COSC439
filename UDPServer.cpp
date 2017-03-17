@@ -122,6 +122,8 @@ ServerMessage check_options(ServerMessage send_message, ClientMessage recieve_me
         strcpy(send_message.message, "You are Logged in already!");
         send_message.UserID = recieve_message.UserID;
         
+    } else if(recieve_message.request_type == ClientMessage::Post){
+        
     }
     
     return send_message;

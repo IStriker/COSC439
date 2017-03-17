@@ -26,7 +26,7 @@ int is_first_login();
 int ask_for_id(string);
 void display_leaders(unsigned int);
 void display_updated_followers(ServerMessage);
-void post(char *);
+string post();
 void clear_buffer();
 unsigned int request_message_feeds();
 unsigned int unfollow_request();
@@ -83,7 +83,7 @@ int main(int argc, char* argv[]){
     cout << "----------------------------------------------------------------" << endl;
     cout << "----------------------------------------------------------------" << endl << endl;
     cout << "Please login first" << endl << endl;
-    
+
     while(TRUE){
         /* call menu options */
         send_message = menu(send_message);
@@ -161,16 +161,17 @@ ClientMessage menu(ClientMessage send_message){
             display_leaders(send_message.UserID);
             send_message.LeaderID = ask_for_id("Please enter id of leader to follow: ");
             break;
-      /* case 3:     /* post */
-            /*if(send_message->request_type == Logout){
-                printf("Please login first\n");
-                return;
+      case 3:     /* post */
+            if(send_message.request_type == ClientMessage::Logout){
+                cout << "Please login first" << endl;
+                return send_message;
             }
             
-            send_message->request_type = Post;
-            post(send_message->message);
+            send_message.request_type = ClientMessage::Post;
+            string message = post();
+            strcpy(send_message.message, message.c_str());
             break;
-        case 4:
+        /*case 4:
             send_message->request_type = Receive;
             printf("This feature does not exist\n");
             break;
@@ -301,3 +302,44 @@ void display_updated_followers(ServerMessage recieve_message){
     }
     
 }
+
+//////////////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * asks a user for the post message and
+ * validates that it is no longer than 140
+ * characters
+ * @return message the post message
+ */
+string post(){
+ 
+start_post:
+    
+    clear_buffer();
+    string message;
+    cout << "Please enter the message you would like to post: ";
+    getline(cin, message);
+    
+    
+    int length = message.size();
+    
+    if(length > ECHOMAX){
+        cout << "Your message exceeded the limit, please try again" << endl;
+        goto start_post;
+    }
+    
+    return message;
+    
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * clears read buffer
+ */
+void clear_buffer(){
+    
+    char c;
+    while ((c = getchar()) != '\n' && c != EOF) { }
+}
+
