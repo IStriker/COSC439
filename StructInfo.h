@@ -10,33 +10,33 @@ using namespace std;
 
 /* client message struct */
 typedef struct {
-
+    
     enum {
         FirstLogin, Login, Follow, Post, Search,
         Receive, Delete, Unfollow, Logout, LoggedIn
     } request_type;                     /* same size as unsigned int */
-
+    
     unsigned int rquest_id;                      /* request client sends */
-
+    
     unsigned int UserID;                /* unique client identifier */
-
+    
     unsigned int LeaderID;              /* unique client indentifiere */
-
+    
     char message[140];
-
+    
 } ClientMessage;
 
 typedef struct{
-
+    
     unsigned int LeaderID ;  /* unique client identifier */
-
+    
     /* store users following, by default its all zeros*/
     int following[10];
-
+    
     unsigned int UserID;    /* unique user id */
-
+    
     char message[140];    /* text message */
-
+    
 }ServerMessage;
 
 
@@ -44,19 +44,22 @@ typedef struct{
  * these users exist in server with sample
  * 
  */
-int sample_leaders_ids[10] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+int leaders_ids[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
 
 /* table of logged in users
  */
-int logged_in_users[10], append_logged_in_index = 0;
+int logged_in_users[10], logged_in_index = 0;
 
 /* store all users ids */
-int user_ids[11] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
-int append_users_index = 5;         /* store user ids and append index */
+int user_ids[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+
 
 char posted_messages[10][10];
 int posted_index = 0;
 
+/* stores users following list */
+int following_list[10][10];
+int following_index[10];
 
 
 

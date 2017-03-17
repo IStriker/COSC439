@@ -15,15 +15,17 @@
 
 using namespace std;
 
+
 /* prototypes*/
 void DieWithError(char *errorMessage);  /* External error handling function */
 
 void login(ClientMessage *);
 ClientMessage menu(ClientMessage );
+ClientMessage recieve_check(ClientMessage, ServerMessage);
 int is_first_login();
 int ask_for_id(string);
-void display_sample_leaders();
-void display_updated_list(ServerMessage *, int);
+void display_leaders(unsigned int);
+void display_updated_followers(ServerMessage);
 void post(char *);
 void clear_buffer();
 unsigned int request_message_feeds();
@@ -82,34 +84,35 @@ int main(int argc, char* argv[]){
     cout << "----------------------------------------------------------------" << endl << endl;
     cout << "Please login first" << endl << endl;
     
-    /* call menu options */
-    send_message = menu(send_message);
+    while(TRUE){
+        /* call menu options */
+        send_message = menu(send_message);
     
-    /* Send the string to the server */
-    if (sendto(sock, (ClientMessage*)&send_message, sizeof(send_message), 0,
+        /* Send the string to the server */
+        if (sendto(sock, (ClientMessage*)&send_message, sizeof(send_message), 0,
                (struct sockaddr*)&echoServAddr, sizeof(echoServAddr)) != sizeof(send_message))
-        DieWithError("Client: sendto() sent a different number of bytes than expected");
+            DieWithError("Client: sendto() sent a different number of bytes than expected");
     
     
-    /* Recv a response */
-    fromSize = sizeof(fromAddr);
-    if ((recvfrom(sock, (ServerMessage *) &recieve_message, sizeof(recieve_message), 0,
+        /* Recv a response */
+        fromSize = sizeof(fromAddr);
+        if ((recvfrom(sock, (ServerMessage *) &recieve_message, sizeof(recieve_message), 0,
                   (struct sockaddr *) &fromAddr, &fromSize)) < 0){
-        DieWithError("Client: recvfrom() failed");
+            DieWithError("Client: recvfrom() failed");
+        }
+    
+    
+        if (echoServAddr.sin_addr.s_addr != fromAddr.sin_addr.s_addr){
+            fprintf(stderr,"Error: received a packet from unknown source.\n");
+            exit(1);
+        }
+    
+        send_message = recieve_check(send_message, recieve_message);
     }
-    
-    
-    if (echoServAddr.sin_addr.s_addr != fromAddr.sin_addr.s_addr){
-        fprintf(stderr,"Error: received a packet from unknown source.\n");
-        exit(1);
-    }
-    
-    cout << "Recieved: " << recieve_message.message << endl;
     
     close(sock);
     exit(0);
     
-	return 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -148,17 +151,17 @@ ClientMessage menu(ClientMessage send_message){
             
             send_message.request_type = ClientMessage::LoggedIn;
             break;
-        /*case 2:     /* follow */
-            /*if(send_message->request_type == Logout){
+        case 2:     /* follow */
+            if(send_message.request_type == ClientMessage::Logout){
                 printf("Please login first\n");
-                return;
+                return send_message;
             }
             
-            send_message->request_type = Follow;
-            display_sample_leaders();
-            send_message->LeaderID = ask_for_id("Please enter id of leader to follow: ");
+            send_message.request_type = ClientMessage::Follow;
+            display_leaders(send_message.UserID);
+            send_message.LeaderID = ask_for_id("Please enter id of leader to follow: ");
             break;
-        case 3:     /* post */
+      /* case 3:     /* post */
             /*if(send_message->request_type == Logout){
                 printf("Please login first\n");
                 return;
@@ -233,8 +236,68 @@ int ask_for_id(string msg){
 ClientMessage recieve_check(ClientMessage send_message, ServerMessage recieve_message){
     
     /* if user did not send a logout request display recieved info */
-    if(send_message.request_type != ClientMessage::Logout){
-        cout << "Received: " << send_message.message << endl;
-        cout << "User id: " << send_message.UserID << endl;
+    if(send_message.request_type != ClientMessage::Logout &&
+       strcmp(recieve_message.message, "Login fail") != 0){
+        cout << "Received: " << recieve_message.message << endl;
+        cout << "User id: " << recieve_message.UserID << endl;
     }
+    
+    
+    if(strcmp(recieve_message.message, "Login success") == 0 &&     /* check if login success */
+       send_message.request_type != ClientMessage::Logout){
+        cout << "\nConnection established" << endl;
+        send_message.request_type = ClientMessage::LoggedIn;
+        
+    } else if(strcmp(recieve_message.message, "Login fail") == 0){  /* check if login failed */
+        
+        cout << "\nerror: Connection failed, Please try again" << endl;
+        send_message.request_type = ClientMessage::Logout;
+        
+    } else if(strcmp(recieve_message.message, "Follow success") == 0){       /* check if follow success */
+        
+        display_updated_followers(recieve_message);
+        
+    } else if(strcmp(recieve_message.message, "Follow failed") == 0){
+        
+        cout << "\nerror: Leader id does not exist, or already in following list" << endl;
+    }
+    
+    return send_message;
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * displays the sample leaders id's
+ * @param id client id
+ */
+void display_leaders(unsigned int id){
+    
+    int i;
+    cout << "\n\n";
+    int size = sizeof(leaders_ids) / sizeof(leaders_ids[0]);
+    for(i = 0; i < size; i++){
+        if(leaders_ids[i] != id)
+            cout << "Leader id: " << leaders_ids[i] << endl;
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * displays updated list after a follow request
+ * @param recieve_message the recieved struct
+ *
+ */
+void display_updated_followers(ServerMessage recieve_message){
+    
+    int i;
+    int size = sizeof(recieve_message.following) / sizeof(recieve_message.following[0]);
+    cout << "--------------------------------------------------------\n\n";
+    cout << "Updated following list" << endl;
+    for(i = 0; i < size; i++){
+        if(recieve_message.following[i] != 0)
+            cout << "Leader ID: " << recieve_message.following[i] << endl;
+    }
+    
 }
