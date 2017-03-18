@@ -28,6 +28,7 @@ void display_leaders(unsigned int);
 void display_updated_followers(ServerMessage);
 string post();
 void clear_buffer();
+bool is_logged_in(ClientMessage);
 unsigned int request_message_feeds();
 unsigned int unfollow_request();
 
@@ -142,7 +143,7 @@ ClientMessage menu(ClientMessage send_message){
     switch(input){
         case 1:     /* login */
             
-            if(send_message.request_type == ClientMessage::Logout){
+            if(!is_logged_in()){
                 
                 send_message.request_type = ClientMessage::Login;
                 send_message.UserID = ask_for_id("Please enter your ID: ");
@@ -152,8 +153,7 @@ ClientMessage menu(ClientMessage send_message){
             send_message.request_type = ClientMessage::LoggedIn;
             break;
         case 2:     /* follow */
-            if(send_message.request_type == ClientMessage::Logout){
-                printf("Please login first\n");
+            if(!is_logged_in()){
                 return send_message;
             }
             
@@ -162,8 +162,7 @@ ClientMessage menu(ClientMessage send_message){
             send_message.LeaderID = ask_for_id("Please enter id of leader to follow: ");
             break;
       case 3:     /* post */
-            if(send_message.request_type == ClientMessage::Logout){
-                cout << "Please login first" << endl;
+            if(!is_logged_in()){
                 return send_message;
             }
             
@@ -171,11 +170,14 @@ ClientMessage menu(ClientMessage send_message){
             string message = post();
             strcpy(send_message.message, message.c_str());
             break;
-        /*case 4:
-            send_message->request_type = Receive;
-            printf("This feature does not exist\n");
+        case 4:
+            if(!is_logged_in()){
+                return send_message;
+            }
+            
+            send_message.request_type = ClientMessage::Receive;
             break;
-        case 5:
+        /*case 5:
             send_message->request_type = Search;
             printf("This feature does not exist\n");
             break;
@@ -258,9 +260,13 @@ ClientMessage recieve_check(ClientMessage send_message, ServerMessage recieve_me
         
         display_updated_followers(recieve_message);
         
-    } else if(strcmp(recieve_message.message, "Follow failed") == 0){
+    } else if(strcmp(recieve_message.message, "Follow failed") == 0){   /* if follow failed */
         
         cout << "\nerror: Leader id does not exist, or already in following list" << endl;
+        
+    } else if(send_message.request_type == ClientMessage::Recieve){
+        
+        
     }
     
     return send_message;
@@ -341,5 +347,23 @@ void clear_buffer(){
     
     char c;
     while ((c = getchar()) != '\n' && c != EOF) { }
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * This function checks if user is logged in or not
+ * @param the client message
+ * @return bool
+ */
+bool is_logged_in(ClientMessage send_message){
+    
+    if(send_message.request_type == ClientMessage::Logout){
+        cout << "Please login first" << endl;
+        return false;
+    }
+    
+    return true;
+    
 }
 

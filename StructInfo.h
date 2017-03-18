@@ -50,12 +50,27 @@ int leaders_ids[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
  */
 int logged_in_users[10], logged_in_index = 0;
 
+
 /* store all users ids */
 int user_ids[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
 
 
-char posted_messages[10][10];
-int posted_index = 0;
+string posted_messages[10][10];
+int posted_index [10];
+
+posted_messages[1] = {
+    "This is a test string for user id 1",
+    "This is test string 2 for user id 1",
+    "This is a test string 3 for user id 1"
+};
+
+posted_messages[10] = {
+    "This is a test string for user id 10",
+    "This is a test string 2 for user id 10",
+    "This is a test string 3 for user id 10"
+};
+posted_index[1] = 3;
+posted_index[10] = 3;
 
 /* stores users following list */
 int following_list[10][10];

@@ -24,7 +24,7 @@ string login(string, unsigned int);
 int generate_id();
 ServerMessage update_followers(ServerMessage, ClientMessage);
 int exist(int*, int, unsigned int);
-void post(char*, int);
+ServerMessage post(ServerMessage, ClientMessage);
 
 
 int main(int argc, char *argv[]){
@@ -105,7 +105,8 @@ ServerMessage check_options(ServerMessage send_message, ClientMessage recieve_me
         strcpy(send_message.message, message_temp.c_str());
         if(strcmp(send_message.message, "Login success") == 0){
             send_message.UserID = recieve_message.UserID;
-            copy(begin(following_list[send_message.UserID]),end(following_list[send_message.UserID]),
+            copy(begin(following_list[send_message.UserID]),
+                 end(following_list[send_message.UserID]),
                  begin(send_message.following));
             logged_in_users[logged_in_index] = recieve_message.UserID;
             logged_in_index++;
@@ -123,6 +124,8 @@ ServerMessage check_options(ServerMessage send_message, ClientMessage recieve_me
         send_message.UserID = recieve_message.UserID;
         
     } else if(recieve_message.request_type == ClientMessage::Post){
+        
+        send_message = post(send_message, recieve_message);
         
     }
     
@@ -221,4 +224,30 @@ int exist(int *array, int size, unsigned int target){
     
     return FALSE;
 }
+
+//////////////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * This function sets posted message by user in posted
+ * messages array and sends back message posted to client
+ * @param send_message the server message
+ * @param recieve_message the client message
+ * @return send_message the server message
+ */
+ServerMessage post(ServerMessage send_message, ClientMessage recieve_message){
+    
+    send_message.UserID = recieve_message.UserID;
+    strcpy(send_message.message, recieve_message.message);
+    int userid = send_message.UserID;
+    
+    posted_messages[userid][posted_index[userid]] = string (recieve_message.message);
+    posted_index[userid]++;
+    
+    return send_message;
+    
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////
+
+
 
