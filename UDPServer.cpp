@@ -27,7 +27,11 @@ int exist(int*, int, unsigned int);
 ServerMessage post(ServerMessage, ClientMessage);
 ServerMessage recieve_request(ServerMessage, ClientMessage, struct sockaddr_in, int);
 int number_of_send_messages(int);
-
+ServerMessage search_hash_tag(ServerMessage , ClientMessage, struct sockaddr_in, int);
+int number_of_send_messages_hash_tag(string, int*);
+bool is_hash_tag(char*);
+void add_hash_message(string);
+bool hash_message_exist(string, int *);
 
 int main(int argc, char *argv[]){
     
@@ -58,7 +62,24 @@ int main(int argc, char *argv[]){
     posted_messages[10][1] = "This is a sample message 2 for user 10";
     posted_messages[10][2] = "This is a sample message 3 for user 10";
     posted_index[10] = 3;
-
+    
+    
+    /* here is a sample of hash tag messages */
+    
+    hash_tag_messages[1][0] = "#EMU campus parking sucks";
+    hash_tag_messages[1][1] = "#EMU walking to pray harlod sucks";
+    hash_tag_messages[1][2] = "#EMU spring is coming soon :)";
+    hash_tag_index[1] = 3;
+    
+    hash_tag_messages[4][0] = "#CompSci computer science student weekend sucks";
+    hash_tag_messages[4][1] = "#CompSci Chemistry class is horrible";
+    hash_tag_messages[4][2] = "#CompSci tracing FAT entries was long process";
+    hash_tag_index[4] = 3;
+    
+    hash_tag_messages[9][0] = "#NetWorks I need to study for exam 2";
+    hash_tag_messages[9][1] = "#NetWorks C programming is a nightmare";
+    hash_tag_messages[9][2] = "#NetWorks C++ is a lighter nightmare";
+    hash_tag_index[9] = 3;
     
     if (argc != 2)         /* Test for correct number of parameters */
     {
@@ -116,8 +137,8 @@ int main(int argc, char *argv[]){
  * @param recieve_message the struct recieved from client
  * @return send_message the server struct
  */
-ServerMessage check_options(ServerMessage send_message, ClientMessage recieve_message, struct
-                            sockaddr_in echoClntAddr, int sock){
+ServerMessage check_options(ServerMessage send_message, ClientMessage recieve_message,
+                            struct sockaddr_in echoClntAddr, int sock){
     
     
     if(recieve_message.request_type == ClientMessage::Login){           /* check if login */
@@ -136,6 +157,10 @@ ServerMessage check_options(ServerMessage send_message, ClientMessage recieve_me
             
         }
         
+    } else if(recieve_message.request_type == ClientMessage::Logout){
+        
+        return send_message;
+        
     } else if(recieve_message.request_type == ClientMessage::Follow){   /* check if follow */
         
         int size = sizeof(send_message.following) / sizeof(send_message.following[0]);
@@ -152,9 +177,15 @@ ServerMessage check_options(ServerMessage send_message, ClientMessage recieve_me
         send_message = post(send_message, recieve_message);
         
     } else if(recieve_message.request_type == ClientMessage::Receive){           /* if recieve */
+        
         cout << "inside recieve" << endl;
         send_message = recieve_request(send_message, recieve_message, echoClntAddr, sock);
-    }
+        
+    } else if(recieve_message.request_type == ClientMessage::Search){       /* if search */
+        
+        send_message = search_hash_tag(send_message, recieve_message, echoClntAddr, sock);
+        
+    } 
     
     return send_message;
 }
@@ -263,6 +294,12 @@ int exist(int *array, int size, unsigned int target){
  */
 ServerMessage post(ServerMessage send_message, ClientMessage recieve_message){
     
+    if(is_hash_tag(recieve_message.message)){
+       
+        string message = string(recieve_message.message);
+        add_hash_message(message);
+    }
+   
     send_message.UserID = recieve_message.UserID;
     strcpy(send_message.message, recieve_message.message);
     int userid = send_message.UserID;
@@ -320,6 +357,7 @@ ServerMessage recieve_request(ServerMessage send_message, ClientMessage recieve_
         }//end outer if statement
     
     }//end outer loop
+    
     strcpy(send_message.message, "Recieve is successful");
     return send_message;
 
@@ -360,5 +398,161 @@ int number_of_send_messages(int user_id){
 
 //////////////////////////////////////////////////////////////////////////////////////////
 
+/**
+ * This searches for hash tag messages
+ * and sends all messages to client
+ * @param send_message the server message
+ * @param recieve_message the client message
+ * @return send_message the server message
+ */
+ServerMessage search_hash_tag(ServerMessage send_message, ClientMessage recieve_message,
+                              struct sockaddr_in echoClntAddr, int sock){
+    
+    string hash_tag_message = string(recieve_message.message);
+    int index;
+    int length = number_of_send_messages_hash_tag(hash_tag_message, &index);
+    send_message.number_of_messages = length;
+    
+    if(length == 0){
+        
+        strcpy(send_message.message, "Search fail");
+        send_message.UserID = recieve_message.UserID;
+        return send_message;
+    }
+    
+    /* send the messages to client */
+    
+    int i;
+    for(i = 0; i < 10; i++){
+        
+        if(hash_tag_messages[index][i] != ""){
+            
+            strcpy(send_message.message, hash_tag_messages[index][i].c_str());
+            send_message.UserID = recieve_message.UserID;
+            
+            /* Send received datagram back to the client */
+            if (sendto(sock, (ServerMessage *) &send_message, sizeof(send_message), 0,
+                       (struct sockaddr *) &echoClntAddr, sizeof(echoClntAddr)) != sizeof(send_message))
+                DieWithError("SERVER: sendto() sent a different number of bytes than expected");
+            send_message.number_of_messages--;
+            
+        }//end out er if statement
+        
+    }//end for
+    
+    strcpy(send_message.message, "Search successful");
+    return send_message;
+}
 
+//////////////////////////////////////////////////////////////////////////////////////////
 
+/**
+ * finds out how many message the hash tag has
+ * and returns it
+ * @param hash_tag_message the hash_tag_message
+ * @param index the index hash tag was found
+ * @return how many messages hash_tag_messag contains
+ */
+int number_of_send_messages_hash_tag(string hash_tag_message, int *index){
+    
+    int length = 0, i, j;
+    
+    for(i = 0; i < 10; i++){
+        
+        string line = hash_tag_messages[i][0].substr(0, hash_tag_messages[i][0].find(' '));
+        
+        if(line == hash_tag_message){
+                        *index = i;
+            for(j = 0; j < 10; j++){
+                
+                if(hash_tag_messages[i][j] != ""){
+                    length++;
+                }
+                
+            } // inner loop
+            
+        }
+        
+    } // outer loop
+    
+    
+    return length;
+    
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * checks if message contains a hash tag
+ * @param message is the message
+ * @return bool
+ */
+bool is_hash_tag(char *message){
+    
+    if(message[0] == '#')
+        return true;
+   
+    return false;
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * adds hash tag message to hash tag list
+ * @param message the hash tag message
+ */
+void add_hash_message(string message){
+    
+    int index;
+    //if hash tag exist add to its list
+    if(hash_message_exist(message, &index)){
+        
+        hash_tag_messages[index][hash_tag_index[index]] = message;
+        return;
+    }
+    
+    //if it does not exist
+    int i;
+    for(i = 0; i < 10; i++){
+        
+        if(hash_tag_messages[i][0] == ""){
+            
+            hash_tag_messages[i][0] = message;
+            hash_tag_index[i]++;
+            return;
+        }
+    }
+    
+    
+    
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * check if hash message already exist 
+ * @param message the hash tag message
+ * @param index the index of hash message in list
+ * @return bool
+ */
+bool hash_message_exist(string message, int *index){
+    
+    string hash_tag = message.substr(0, message.find(' '));
+    
+    int i;
+    
+    for(i = 0; i < 10; i++){
+        
+        if(hash_tag_messages[i][0] != ""){
+            
+            string temp = hash_tag_messages[i][0].substr(0, hash_tag_messages[i][0].find(' '));
+            if(hash_tag == temp){
+                *index = i;
+                return true;
+            }
+            
+        }
+    }// end for loop
+    
+    return false;
+}

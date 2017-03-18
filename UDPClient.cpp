@@ -30,7 +30,9 @@ string post();
 void clear_buffer();
 bool is_logged_in(ClientMessage);
 unsigned int request_message_feeds();
+string ask_for_hash_tag();
 unsigned int unfollow_request();
+void check_buffer();
 
 int main(int argc, char* argv[]){
 	
@@ -111,7 +113,7 @@ int main(int argc, char* argv[]){
             }
         
             send_message = recieve_check(send_message, recieve_message);
-        
+            
         } while(recieve_message.number_of_messages > 0);
             
     }
@@ -176,21 +178,29 @@ ClientMessage menu(ClientMessage send_message){
             message = post();
             strcpy(send_message.message, message.c_str());
             break;
-        case 4:
+        case 4:     /* request */
             if(!is_logged_in(send_message)){
                 return send_message;
             }
             
             send_message.request_type = ClientMessage::Receive;
             break;
-        /*case 5:
-            send_message->request_type = Search;
-            printf("This feature does not exist\n");
+        case 5:     /* search */
+            if(!is_logged_in(send_message)){
+                return send_message;
+            }
+            
+            message = ask_for_hash_tag();
+            strcpy(send_message.message, message.c_str());
+            send_message.request_type = ClientMessage::Search;
             break;
-        case 6:
-            send_message->request_type = Delete;
-            printf("This feature does not exist\n");
-            break;
+        case 6: /* delete */
+            if(!is_logged_in(send_message)){
+                return send_message;
+            }
+            
+            send_message.request_type = ClientMessage::Delete;
+            break;  
         case 7:
             /*if(send_message->request_type != LoggedIn){
              printf("Please login first\n");
@@ -247,9 +257,11 @@ ClientMessage recieve_check(ClientMessage send_message, ServerMessage recieve_me
     /* if user did not send a logout request display recieved info */
     if(send_message.request_type != ClientMessage::Logout &&
        strcmp(recieve_message.message, "Login fail") != 0 &&
-       send_message.request_type != ClientMessage::Receive){
+       send_message.request_type != ClientMessage::Receive
+       && send_message.request_type != ClientMessage::Search){
         cout << "\nReceived: " << recieve_message.message << endl;
         cout << "User id: " << recieve_message.UserID << endl;
+        check_buffer();
     }
     
     
@@ -257,30 +269,56 @@ ClientMessage recieve_check(ClientMessage send_message, ServerMessage recieve_me
        send_message.request_type != ClientMessage::Logout){
         cout << "\nConnection established" << endl;
         send_message.request_type = ClientMessage::LoggedIn;
+        check_buffer();
         
     } else if(strcmp(recieve_message.message, "Login fail") == 0){  /* check if login failed */
         
-        cout << "\nerror: Connection failed, Please try again" << endl;
+        cout << "\nError: Connection failed, Please try again" << endl;
         send_message.request_type = ClientMessage::Logout;
+        check_buffer();
         
     } else if(strcmp(recieve_message.message, "Follow success") == 0){       /* check if follow success */
         
         display_updated_followers(recieve_message);
+        check_buffer();
         
     } else if(strcmp(recieve_message.message, "Follow failed") == 0){   /* if follow failed */
         
-        cout << "\nerror: Leader id does not exist, or already in following list" << endl;
+        cout << "\nError: Leader id does not exist, or already in following list" << endl;
+        check_buffer();
         
     } else if(send_message.request_type == ClientMessage::Receive
-              && strcmp(recieve_message.message, "Recieve is successful") != 0){
+              && strcmp(recieve_message.message, "Recieve is successful") != 0){  /* if recieve */
         
         cout << "\nReceived: " << recieve_message.message << endl;
         cout << "Leader id: " << recieve_message.LeaderID << endl;
-
-    } else if(strcmp(recieve_message.message, "Recieve is successful") == 0){
+        check_buffer();
+        
+    } else if(strcmp(recieve_message.message, "Recieve is successful") == 0){   /* recieve success */
         
         cout << "\nReceived: " << recieve_message.message << endl;
         cout << "User id: " << recieve_message.UserID << endl;
+        check_buffer();
+        
+    } else if(send_message.request_type == ClientMessage::Search
+              && strcmp(recieve_message.message, "Search successful") != 0
+              && strcmp(recieve_message.message, "Search fail") != 0){    /* if search */
+        
+        cout << "\nRecieved: " << recieve_message.message << endl;
+        check_buffer();
+        
+    } else if(strcmp(recieve_message.message, "Search successful") == 0){   /* if search success */
+        
+        cout << "\nReceived: " << recieve_message.message << endl;
+        cout << "User id: " << recieve_message.UserID << endl;
+        check_buffer();
+        //if(!cin)
+          //clear_buffer();
+        
+    } else if(strcmp(recieve_message.message, "Search fail") == 0){         /* if search fail */
+        
+        cout << "\nError: Hash tag does not exist" << endl;
+        check_buffer();
     }
     
     return send_message;
@@ -344,7 +382,7 @@ start_post:
     int length = message.size();
     
     if(length > ECHOMAX){
-        cout << "Your message exceeded the limit, please try again" << endl;
+        cout << "Error: Your message exceeded the limit, please try again" << endl;
         goto start_post;
     }
     
@@ -359,8 +397,11 @@ start_post:
  */
 void clear_buffer(){
     
-    char c;
-    while ((c = getchar()) != '\n' && c != EOF) { }
+    /*char c;
+    while ((c = getchar()) != '\n' && c != EOF) { }*/
+    cin.clear();
+    string ignoreLine;
+    getline(cin, ignoreLine);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -373,11 +414,51 @@ void clear_buffer(){
 bool is_logged_in(ClientMessage send_message){
     
     if(send_message.request_type == ClientMessage::Logout){
-        cout << "Please login first" << endl;
+        cout << "Error: Please login first" << endl;
         return false;
     }
     
     return true;
+    
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * This function asks client for hashtag
+ * @return hashtag
+ */
+string ask_for_hash_tag(){
+ 
+start_ask_hashtag:
+    
+    clear_buffer();
+    
+    string hash_tag;
+    cout << "Please enter hashtag: ";
+    cin >> hash_tag;
+    
+    //check if there is space
+    char c;
+    if((c = getchar()) != EOF && c != '\n'){
+        cout << "Error: No spaces allowed, Please try again" << endl;
+        goto start_ask_hashtag;
+    }
+    
+    return hash_tag;
+    
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * This function checks keyboard buffer
+ * and calls clear_buffer if anythig in buffer
+ */
+void check_buffer(){
+    
+    if(!cin)
+        clear_buffer();
     
 }
 

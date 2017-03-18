@@ -46,7 +46,7 @@ typedef struct{
  * these users exist in server with sample
  * 
  */
-int leaders_ids[1] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+int leaders_ids[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
 
 /* table of logged in users
  */
@@ -65,6 +65,8 @@ int posted_index [11];
 int following_list[11][11];
 int following_index[11];
 
-
+/* stores hashtag messages */
+string hash_tag_messages[10][10];
+int hash_tag_index[10];
 
 
