@@ -94,21 +94,26 @@ int main(int argc, char* argv[]){
                (struct sockaddr*)&echoServAddr, sizeof(echoServAddr)) != sizeof(send_message))
             DieWithError("Client: sendto() sent a different number of bytes than expected");
     
-    
-        /* Recv a response */
-        fromSize = sizeof(fromAddr);
-        if ((recvfrom(sock, (ServerMessage *) &recieve_message, sizeof(recieve_message), 0,
+        
+        /* check to see if recieveing multiple messages */
+        do {
+            /* Recv a response */
+            fromSize = sizeof(fromAddr);
+            if ((recvfrom(sock, (ServerMessage *) &recieve_message, sizeof(recieve_message), 0,
                   (struct sockaddr *) &fromAddr, &fromSize)) < 0){
-            DieWithError("Client: recvfrom() failed");
-        }
+                DieWithError("Client: recvfrom() failed");
+            }
     
     
-        if (echoServAddr.sin_addr.s_addr != fromAddr.sin_addr.s_addr){
-            fprintf(stderr,"Error: received a packet from unknown source.\n");
-            exit(1);
-        }
-    
-        send_message = recieve_check(send_message, recieve_message);
+            if (echoServAddr.sin_addr.s_addr != fromAddr.sin_addr.s_addr){
+                fprintf(stderr,"Error: received a packet from unknown source.\n");
+                exit(1);
+            }
+        
+            send_message = recieve_check(send_message, recieve_message);
+        
+        } while(recieve_message.number_of_messages > 0);
+            
     }
     
     close(sock);
@@ -128,6 +133,7 @@ int main(int argc, char* argv[]){
 ClientMessage menu(ClientMessage send_message){
     
     int input;
+    string message;
     
     cout << "----------------------------------------------------------------" << endl;
     cout << "----------------------------------------------------------------" << endl << endl;
@@ -143,7 +149,7 @@ ClientMessage menu(ClientMessage send_message){
     switch(input){
         case 1:     /* login */
             
-            if(!is_logged_in()){
+            if(!is_logged_in(send_message)){
                 
                 send_message.request_type = ClientMessage::Login;
                 send_message.UserID = ask_for_id("Please enter your ID: ");
@@ -153,7 +159,7 @@ ClientMessage menu(ClientMessage send_message){
             send_message.request_type = ClientMessage::LoggedIn;
             break;
         case 2:     /* follow */
-            if(!is_logged_in()){
+            if(!is_logged_in(send_message)){
                 return send_message;
             }
             
@@ -161,17 +167,17 @@ ClientMessage menu(ClientMessage send_message){
             display_leaders(send_message.UserID);
             send_message.LeaderID = ask_for_id("Please enter id of leader to follow: ");
             break;
-      case 3:     /* post */
-            if(!is_logged_in()){
+        case 3:     /* post */
+            if(!is_logged_in(send_message)){
                 return send_message;
             }
             
             send_message.request_type = ClientMessage::Post;
-            string message = post();
+            message = post();
             strcpy(send_message.message, message.c_str());
             break;
         case 4:
-            if(!is_logged_in()){
+            if(!is_logged_in(send_message)){
                 return send_message;
             }
             
@@ -240,8 +246,9 @@ ClientMessage recieve_check(ClientMessage send_message, ServerMessage recieve_me
     
     /* if user did not send a logout request display recieved info */
     if(send_message.request_type != ClientMessage::Logout &&
-       strcmp(recieve_message.message, "Login fail") != 0){
-        cout << "Received: " << recieve_message.message << endl;
+       strcmp(recieve_message.message, "Login fail") != 0 &&
+       send_message.request_type != ClientMessage::Receive){
+        cout << "\nReceived: " << recieve_message.message << endl;
         cout << "User id: " << recieve_message.UserID << endl;
     }
     
@@ -264,9 +271,16 @@ ClientMessage recieve_check(ClientMessage send_message, ServerMessage recieve_me
         
         cout << "\nerror: Leader id does not exist, or already in following list" << endl;
         
-    } else if(send_message.request_type == ClientMessage::Recieve){
+    } else if(send_message.request_type == ClientMessage::Receive
+              && strcmp(recieve_message.message, "Recieve is successful") != 0){
         
+        cout << "\nReceived: " << recieve_message.message << endl;
+        cout << "Leader id: " << recieve_message.LeaderID << endl;
+
+    } else if(strcmp(recieve_message.message, "Recieve is successful") == 0){
         
+        cout << "\nReceived: " << recieve_message.message << endl;
+        cout << "User id: " << recieve_message.UserID << endl;
     }
     
     return send_message;
@@ -284,7 +298,7 @@ void display_leaders(unsigned int id){
     cout << "\n\n";
     int size = sizeof(leaders_ids) / sizeof(leaders_ids[0]);
     for(i = 0; i < size; i++){
-        if(leaders_ids[i] != id)
+        if(leaders_ids[i] != id && leaders_ids[i] != 0)
             cout << "Leader id: " << leaders_ids[i] << endl;
     }
 }

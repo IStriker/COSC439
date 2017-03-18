@@ -31,11 +31,13 @@ typedef struct{
     unsigned int LeaderID ;  /* unique client identifier */
     
     /* store users following, by default its all zeros*/
-    int following[10];
+    int following[11];
     
     unsigned int UserID;    /* unique user id */
     
     char message[140];    /* text message */
+    
+    int number_of_messages = 0;
     
 }ServerMessage;
 
@@ -44,7 +46,7 @@ typedef struct{
  * these users exist in server with sample
  * 
  */
-int leaders_ids[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+int leaders_ids[1] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
 
 /* table of logged in users
  */
@@ -55,26 +57,13 @@ int logged_in_users[10], logged_in_index = 0;
 int user_ids[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
 
 
-string posted_messages[10][10];
-int posted_index [10];
+string posted_messages[11][11];
+int posted_index [11];
 
-posted_messages[1] = {
-    "This is a test string for user id 1",
-    "This is test string 2 for user id 1",
-    "This is a test string 3 for user id 1"
-};
-
-posted_messages[10] = {
-    "This is a test string for user id 10",
-    "This is a test string 2 for user id 10",
-    "This is a test string 3 for user id 10"
-};
-posted_index[1] = 3;
-posted_index[10] = 3;
 
 /* stores users following list */
-int following_list[10][10];
-int following_index[10];
+int following_list[11][11];
+int following_index[11];
 
 
 

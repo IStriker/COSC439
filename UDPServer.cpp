@@ -19,12 +19,14 @@ using namespace std;
 
 
 void DieWithError(char *errorMessage);  /* External error handling function */
-ServerMessage check_options(ServerMessage, ClientMessage);
+ServerMessage check_options(ServerMessage, ClientMessage, struct sockaddr_in, int);
 string login(string, unsigned int);
 int generate_id();
 ServerMessage update_followers(ServerMessage, ClientMessage);
 int exist(int*, int, unsigned int);
 ServerMessage post(ServerMessage, ClientMessage);
+ServerMessage recieve_request(ServerMessage, ClientMessage, struct sockaddr_in, int);
+int number_of_send_messages(int);
 
 
 int main(int argc, char *argv[]){
@@ -34,11 +36,29 @@ int main(int argc, char *argv[]){
     struct sockaddr_in echoServAddr; /* Local address */
     struct sockaddr_in echoClntAddr; /* Client address */
     unsigned int cliAddrLen;         /* Length of incoming message */
-    string echoBuffer;        /* Buffer for echo string */
+    string echoBuffer;              /* Buffer for echo string */
     unsigned short echoServPort;     /* Server port */
     
     ServerMessage send_message;     /* struct for sending */
     ClientMessage recieve_message;  /* struct for recieveing */
+    
+    /* here is a sample messages for 3 users users */
+    
+    posted_messages[1][0] = "This is sample message 1 for user 1";
+    posted_messages[1][1] = "This is sample message 2 for user 1";
+    posted_messages[1][2] = "This is sample message 3 for user 1";
+    posted_index[1] = 3;
+    
+    posted_messages[4][0] = "This is a sample message 1 for user 4";
+    posted_messages[4][1] = "This is a sample message 2 for user 4";
+    posted_messages[4][2] = "This is a sample message 3 for user 4";
+    posted_index[4] = 3;
+    
+    posted_messages[10][0] = "This is a sample message 1 for user 10";
+    posted_messages[10][1] = "This is a sample message 2 for user 10";
+    posted_messages[10][2] = "This is a sample message 3 for user 10";
+    posted_index[10] = 3;
+
     
     if (argc != 2)         /* Test for correct number of parameters */
     {
@@ -75,7 +95,7 @@ int main(int argc, char *argv[]){
         //printf("Handling client %s\n", inet_ntoa(echoClntAddr.sin_addr));
         cout << "Handling client: " << inet_ntoa(echoClntAddr.sin_addr) << endl;
         
-        send_message = check_options(send_message, recieve_message);
+        send_message = check_options(send_message, recieve_message, echoClntAddr, sock);
         
         /* Send received datagram back to the client */
         if (sendto(sock, (ServerMessage *) &send_message, sizeof(send_message), 0,
@@ -96,7 +116,8 @@ int main(int argc, char *argv[]){
  * @param recieve_message the struct recieved from client
  * @return send_message the server struct
  */
-ServerMessage check_options(ServerMessage send_message, ClientMessage recieve_message){
+ServerMessage check_options(ServerMessage send_message, ClientMessage recieve_message, struct
+                            sockaddr_in echoClntAddr, int sock){
     
     
     if(recieve_message.request_type == ClientMessage::Login){           /* check if login */
@@ -104,29 +125,35 @@ ServerMessage check_options(ServerMessage send_message, ClientMessage recieve_me
         string message_temp = login(send_message.message, recieve_message.UserID);
         strcpy(send_message.message, message_temp.c_str());
         if(strcmp(send_message.message, "Login success") == 0){
-            send_message.UserID = recieve_message.UserID;
+            
             copy(begin(following_list[send_message.UserID]),
                  end(following_list[send_message.UserID]),
                  begin(send_message.following));
+            
             logged_in_users[logged_in_index] = recieve_message.UserID;
             logged_in_index++;
+            send_message.UserID = recieve_message.UserID;
+            
         }
         
     } else if(recieve_message.request_type == ClientMessage::Follow){   /* check if follow */
         
         int size = sizeof(send_message.following) / sizeof(send_message.following[0]);
-        send_message.UserID = recieve_message.UserID;
         send_message = update_followers(send_message, recieve_message);
+        send_message.UserID = recieve_message.UserID;
         
     } else if(recieve_message.request_type == ClientMessage::LoggedIn){		/* if logged in */
         
         strcpy(send_message.message, "You are Logged in already!");
         send_message.UserID = recieve_message.UserID;
         
-    } else if(recieve_message.request_type == ClientMessage::Post){
+    } else if(recieve_message.request_type == ClientMessage::Post){         /* if post */
         
         send_message = post(send_message, recieve_message);
         
+    } else if(recieve_message.request_type == ClientMessage::Receive){           /* if recieve */
+        cout << "inside recieve" << endl;
+        send_message = recieve_request(send_message, recieve_message, echoClntAddr, sock);
     }
     
     return send_message;
@@ -174,11 +201,11 @@ ServerMessage update_followers(ServerMessage send_message, ClientMessage recieve
     int i;
     int size_user_ids = sizeof(user_ids) / sizeof(user_ids[0]);
     int size_leaders_ids = sizeof(leaders_ids) / sizeof(leaders_ids[0]);
-    int userid = send_message.UserID;
+    int userid = recieve_message.UserID;
     
     //check if user exist in leaders_ids array and if user in following list
     if(!exist(leaders_ids, size_user_ids, recieve_message.LeaderID) ||
-       exist(following_list[send_message.UserID], size_leaders_ids, recieve_message.LeaderID)){
+       exist(following_list[userid], size_leaders_ids, recieve_message.LeaderID)){
         strcpy(send_message.message, "Follow failed");
         return send_message;
     }
@@ -186,7 +213,7 @@ ServerMessage update_followers(ServerMessage send_message, ClientMessage recieve
     //else add and make sure user did not accidently put their id, to follow their self
     for(i = 0; i < size_leaders_ids; i++){
         if(leaders_ids[i] == recieve_message.LeaderID
-           && leaders_ids[i] != recieve_message.UserID){
+           && leaders_ids[i] != userid){
             
             //update global 2D following_list array and client following list
             following_list[userid][following_index[userid]] = recieve_message.LeaderID;
@@ -245,6 +272,90 @@ ServerMessage post(ServerMessage send_message, ClientMessage recieve_message){
     
     return send_message;
     
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * This function sends leaders messages
+ * to user when recieve request is invoked
+ * @param send_message the server message
+ * @param recieve_message the client message
+ * @param echoClntAddr the client address
+ * @param sock the UDP socket
+ */
+ServerMessage recieve_request(ServerMessage send_message, ClientMessage recieve_message, struct
+                              sockaddr_in echoClntAddr, int sock){
+    
+    //check for people user is following
+    int i,j, leader_id;
+    int userid = recieve_message.UserID;
+    send_message.number_of_messages =  number_of_send_messages(userid);
+    
+    for(i = 0; i < 11; i++){
+        
+        if(following_list[userid][i] != 0){
+            
+            leader_id = following_list[userid][i];
+            //check leader id posted messages
+            for(j = 0; j < 11; j++){
+                
+                if(posted_messages[leader_id][j] != ""){
+                    
+                    strcpy(send_message.message, posted_messages[leader_id][j].c_str());
+                    send_message.UserID = recieve_message.UserID;
+                    send_message.LeaderID = leader_id;
+                    
+                    
+                    /* Send received datagram back to the client */
+                    if (sendto(sock, (ServerMessage *) &send_message, sizeof(send_message), 0,
+                               (struct sockaddr *) &echoClntAddr, sizeof(echoClntAddr)) != sizeof(send_message))
+                        DieWithError("SERVER: sendto() sent a different number of bytes than expected");
+                    else
+                        send_message.number_of_messages--;
+                }
+                
+            }//end inner loop
+            
+        }//end outer if statement
+    
+    }//end outer loop
+    strcpy(send_message.message, "Recieve is successful");
+    return send_message;
+
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////
+
+/* this finds out the number of messages server
+ * is sending to client on a recieve request
+ * @param user_id the client user id
+ * @return the number of messages
+ */
+int number_of_send_messages(int user_id){
+    
+    int i, j, leader_id, length = 0;
+    
+    //sort user following list
+    sort(begin(following_list[user_id]), end(following_list[user_id]));
+    
+    for(i = 0; i < 11; i++){
+        
+        if(following_list[user_id][i] != 0){
+            
+            leader_id = following_list[user_id][i];
+            
+            for(j = 0; j < 11; j++){
+                
+                if(posted_messages[leader_id][j] != ""){
+                    
+                    length++;
+                }
+            } //end inner loop
+        }
+    }//end outer loop
+    
+    return length;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
