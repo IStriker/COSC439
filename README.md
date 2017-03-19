@@ -14,6 +14,11 @@ Server program: UDPServer.cpp
 Example Compiling client: g++ -o UDPClient UDPClient.cpp DieWithError.cpp
 Example Compiling server: g++ -o UDPServer UDPServer.cpp DieWithError.cpp
 
+#Run
+./UDPServer <port>--> (ex: 20000)
+./UDPClient 127.0.0.1  "<your message>" <port>--> (x: 20000)
+
+
 ##Machine:
 This was developed, compiled, and ran on a macOS Sierra version 10.12.13
 
