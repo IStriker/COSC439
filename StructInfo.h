@@ -13,10 +13,11 @@ typedef struct {
     
     enum {
         FirstLogin, Login, Follow, Post, Search,
-        Receive, Delete, Unfollow, Logout, LoggedIn
+        Receive, Delete, Unfollow, Logout, LoggedIn,
+        DeleteIndex
     } request_type;                     /* same size as unsigned int */
     
-    unsigned int rquest_id;                      /* request client sends */
+    unsigned int request_id;                      /* request client sends */
     
     unsigned int UserID;                /* unique client identifier */
     
@@ -69,4 +70,6 @@ int following_index[11];
 string hash_tag_messages[10][10];
 int hash_tag_index[10];
 
+/* index for numbering client messages when delete is invoked */
+int index_delete = 0;
 

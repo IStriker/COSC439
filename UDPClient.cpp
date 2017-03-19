@@ -31,8 +31,10 @@ void clear_buffer();
 bool is_logged_in(ClientMessage);
 unsigned int request_message_feeds();
 string ask_for_hash_tag();
-unsigned int unfollow_request();
+int unfollow_request();
 void check_buffer();
+void ask_to_delete(ClientMessage, ServerMessage, struct sockaddr_in, struct sockaddr_in,
+                   unsigned int , int);
 
 int main(int argc, char* argv[]){
 	
@@ -88,8 +90,10 @@ int main(int argc, char* argv[]){
     cout << "Please login first" << endl << endl;
 
     while(TRUE){
+        
         /* call menu options */
         send_message = menu(send_message);
+    
     
         /* Send the string to the server */
         if (sendto(sock, (ClientMessage*)&send_message, sizeof(send_message), 0,
@@ -115,7 +119,9 @@ int main(int argc, char* argv[]){
             send_message = recieve_check(send_message, recieve_message);
             
         } while(recieve_message.number_of_messages > 0);
-            
+        
+        index_delete = 0;
+        
     }
     
     close(sock);
@@ -133,6 +139,8 @@ int main(int argc, char* argv[]){
  * @return a struct
  */
 ClientMessage menu(ClientMessage send_message){
+    
+start_menu:
     
     int input;
     string message;
@@ -195,31 +203,36 @@ ClientMessage menu(ClientMessage send_message){
             send_message.request_type = ClientMessage::Search;
             break;
         case 6: /* delete */
+            
+            cout << "this feature is not working right" << endl;
+            check_buffer();
+            goto start_menu;
+            break;
+        case 7: /* unfollow */
             if(!is_logged_in(send_message)){
                 return send_message;
             }
-            
-            send_message.request_type = ClientMessage::Delete;
-            break;  
-        case 7:
-            /*if(send_message->request_type != LoggedIn){
-             printf("Please login first\n");
-             return;
-             }
+
              
-             send_message->request_type = Unfollow;
-             send_message->LeaderID = unfollow_request();*/
-           /* printf("This feature does not exist\n");
+            send_message.request_type = ClientMessage::Unfollow;
+            send_message.LeaderID = unfollow_request();
             break;
-        case 8:
-            send_message->request_type = Logout; break;
+        case 8: /* if logout */
+            if(!is_logged_in(send_message)){
+                cout << "inside not logged in" << endl;
+                return send_message;
+            }
+            
+            send_message.request_type = ClientMessage::Logout;
+            break;
         case 9:
             exit(0);break;
         default:
-            printf("Invlaid choice, please try again\n");
-            getchar();
+            
+            cout << "Invlaid choice, please try again" << endl;
+            check_buffer();
             goto start_menu;
-            break; */
+            break;
             
     }
 
@@ -258,15 +271,17 @@ ClientMessage recieve_check(ClientMessage send_message, ServerMessage recieve_me
     if(send_message.request_type != ClientMessage::Logout &&
        strcmp(recieve_message.message, "Login fail") != 0 &&
        send_message.request_type != ClientMessage::Receive
-       && send_message.request_type != ClientMessage::Search){
+       && send_message.request_type != ClientMessage::Search
+       && send_message.request_type != ClientMessage::Delete){
         cout << "\nReceived: " << recieve_message.message << endl;
         cout << "User id: " << recieve_message.UserID << endl;
         check_buffer();
     }
     
     
-    if(strcmp(recieve_message.message, "Login success") == 0 &&     /* check if login success */
-       send_message.request_type != ClientMessage::Logout){
+    if(strcmp(recieve_message.message, "Login success") == 0
+       && send_message.request_type != ClientMessage::Logout
+       && send_message.request_type != ClientMessage::Delete){      /* check if login success */
         cout << "\nConnection established" << endl;
         send_message.request_type = ClientMessage::LoggedIn;
         check_buffer();
@@ -319,8 +334,17 @@ ClientMessage recieve_check(ClientMessage send_message, ServerMessage recieve_me
         
         cout << "\nError: Hash tag does not exist" << endl;
         check_buffer();
-    }
     
+    } else if(strcmp(recieve_message.message, "Unfollow successful") == 0){  /* if unfollow success */
+            
+            display_updated_followers(recieve_message);
+            check_buffer();
+        
+    } else if(strcmp(recieve_message.message, "You are logged out") == 0){  /* if logout successful*/
+            
+            cout << "Recieved: " << recieve_message.message << endl;
+    }
+        
     return send_message;
 }
 
@@ -414,7 +438,6 @@ void clear_buffer(){
 bool is_logged_in(ClientMessage send_message){
     
     if(send_message.request_type == ClientMessage::Logout){
-        cout << "Error: Please login first" << endl;
         return false;
     }
     
@@ -459,6 +482,64 @@ void check_buffer(){
     
     if(!cin)
         clear_buffer();
+    
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * This function sends server index message to delete
+ * @param send_message the client message
+ * @param recive_message the server message
+ * @param echoServAddr the server addrress
+ * @param fromAddr the client address
+ * @param fromSize the server address size
+ */
+void ask_to_delete(ClientMessage send_message, ServerMessage recieve_message, struct sockaddr_in echoServAddr, struct sockaddr_in fromAddr, unsigned int fromSize, int sock){
+    
+    send_message.request_id =   ask_for_id("Please choose message number you wish to delete: ");
+    send_message.request_type = ClientMessage::DeleteIndex;
+    
+    /* Send the string to the server */
+    if (sendto(sock, (ClientMessage*)&send_message, sizeof(send_message), 0,
+               (struct sockaddr*)&echoServAddr, sizeof(echoServAddr)) != sizeof(send_message))
+        DieWithError("Client: sendto() sent a different number of bytes than expected");
+    
+    
+    
+    /* Recv a response */
+    fromSize = sizeof(fromAddr);
+    if ((recvfrom(sock, (ServerMessage *) &recieve_message, sizeof(recieve_message), 0,
+                    (struct sockaddr *) &fromAddr, &fromSize)) < 0){
+        DieWithError("Client: recvfrom() failed");
+    }
+        
+        
+    if (echoServAddr.sin_addr.s_addr != fromAddr.sin_addr.s_addr){
+        fprintf(stderr,"Error: received a packet from unknown source.\n");
+        exit(1);
+    }
+    
+    
+    cout << "recived: " << "Delete successful" << endl;
+    cout << "user id: " << recieve_message.UserID << endl;
+        
+}
+
+
+/////////////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * this function asks user for leader they want to unfollow
+ * @return leader id
+ */
+int unfollow_request(){
+    
+    int leader_id;
+    cout << "Please enter id of leader you want to unfollow: ";
+    cin >> leader_id;
+    return leader_id;
+    
     
 }
 

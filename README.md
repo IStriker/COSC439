@@ -1,20 +1,55 @@
 Ahmed Aldhaheri
 Course: COSC439
-Date: 3/13/2017
+Date: 3/18/2017
 
-This program is not complete.
+#Description:
+This program is not complete: (delete does not work)
 
-Client program: UDPEchoClient.c
-Server program: UDPEchoServer.c
+#Compiling:
+Client program: UDPClient.cpp
+Server program: UDPServer.cpp
 
-Example Compiling: gcc -o UDPEchoClient UDPEchoClient.c DieWithError.can
+Example Compiling client: g++ -o UDPClient UDPClient.cpp DieWithError.cpp
+Example Compiling server: g++ -o UDPServer UDPServer.cpp DieWithError.cpp
 
-When you launch the client program it will display a menu. 
+##Machine:
+This was developed, compiled, and ran on a macOS Sierra version 10.12.13
+
+##Program 
+When you launch the client program it will display the following menu: 
+
+1: Login
+2: Follow one or more users
+3: Post a message
+4: Receive message feed from all leaders
+5: search message with tag
+6: Delete a posted message
+7: Unfollow one or more leaders
+8: logout
+9: Quit the client program
+
+#Note: 
+Option 6 (Delete a posted message) is not working, but still will display,
+if clicked on, it will display message and lauch back the menu
+
+#Operation:
 You first need to login with a user id that already exist in the 
-StructInfo.h in the user_ids array. The array has user ids from 0-9.
-You can choose any number from 0-9 to login. once logged in, you can do the followin:
-1. follow users
-2. post message
-3. Logout 
-4. quit program
+StructInfo.h in the user_ids array (see below). The array has user ids from 1-10.
+You can choose any number from 1-10 to login. once logged in, you can do the following:
 
+1: Login
+2: Follow one or more users
+3: Post a message
+4: Receive message feed from all leaders
+5: search message with tag
+7: Unfollow one or more leaders
+8: logout
+9: Quit the client program
+
+#Extra Features:
+The program saves client information even when they quit the program.
+The only way it loses the client information when server program quits.
+
+#below
+/* store all users ids */
+int user_ids[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};

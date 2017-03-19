@@ -17,7 +17,7 @@
 
 using namespace std;
 
-
+/* protorypes */
 void DieWithError(char *errorMessage);  /* External error handling function */
 ServerMessage check_options(ServerMessage, ClientMessage, struct sockaddr_in, int);
 string login(string, unsigned int);
@@ -32,6 +32,9 @@ int number_of_send_messages_hash_tag(string, int*);
 bool is_hash_tag(char*);
 void add_hash_message(string);
 bool hash_message_exist(string, int *);
+void delete_request(ServerMessage, ClientMessage, struct sockaddr_in, int);
+ServerMessage delete_message(ServerMessage, ClientMessage);
+ServerMessage unfollow_leader(ServerMessage, ClientMessage);
 
 int main(int argc, char *argv[]){
     
@@ -159,6 +162,8 @@ ServerMessage check_options(ServerMessage send_message, ClientMessage recieve_me
         
     } else if(recieve_message.request_type == ClientMessage::Logout){
         
+        logged_in_users[recieve_message.UserID] = 0;
+        strcpy(send_message.message, "You are logged out");
         return send_message;
         
     } else if(recieve_message.request_type == ClientMessage::Follow){   /* check if follow */
@@ -169,7 +174,7 @@ ServerMessage check_options(ServerMessage send_message, ClientMessage recieve_me
         
     } else if(recieve_message.request_type == ClientMessage::LoggedIn){		/* if logged in */
         
-        strcpy(send_message.message, "You are Logged in already!");
+        strcpy(send_message.message, "You are Logged in");
         send_message.UserID = recieve_message.UserID;
         
     } else if(recieve_message.request_type == ClientMessage::Post){         /* if post */
@@ -178,14 +183,25 @@ ServerMessage check_options(ServerMessage send_message, ClientMessage recieve_me
         
     } else if(recieve_message.request_type == ClientMessage::Receive){           /* if recieve */
         
-        cout << "inside recieve" << endl;
         send_message = recieve_request(send_message, recieve_message, echoClntAddr, sock);
         
     } else if(recieve_message.request_type == ClientMessage::Search){       /* if search */
         
         send_message = search_hash_tag(send_message, recieve_message, echoClntAddr, sock);
         
-    } 
+    } else if(recieve_message.request_type == ClientMessage::Delete){   /* if delete */
+        
+        delete_request(send_message, recieve_message, echoClntAddr, sock);
+        
+    } else if(recieve_message.request_type == ClientMessage::DeleteIndex){  /* if delete index */
+        
+        send_message = delete_message(send_message, recieve_message);
+        
+    } else if(recieve_message.request_type == ClientMessage::Unfollow){     /* if unfollow */
+        
+        send_message = unfollow_leader(send_message, recieve_message);
+        
+    }
     
     return send_message;
 }
@@ -206,7 +222,7 @@ string login(string word, unsigned int id){
     
     //check if id already in logged in users
     if(exist(logged_in_users, size, id))
-        return "You are logged in already";
+        return "You are logged in";
     
     for(i = 0; i < size; i++){
         
@@ -552,7 +568,126 @@ bool hash_message_exist(string message, int *index){
             }
             
         }
-    }// end for loop
+    }  //end for loop
     
     return false;
 }
+
+//////////////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * this sends the client messages for display
+ * @param send_message the server message
+ * @param recieve_message the client message
+ * @param echoClntAddr the client address
+ * @param sock the UDP socket
+ */
+void delete_request(ServerMessage send_message, ClientMessage recieve_message,
+                    struct sockaddr_in echoClntAddr, int sock){
+    
+    int i;
+    int user_id = recieve_message.UserID;
+    int size = posted_index[user_id];
+    send_message.number_of_messages = size;
+    send_message.UserID = recieve_message.UserID;
+    
+    for(i = 0; i < size; i++){
+        
+        
+        strcpy(send_message.message, posted_messages[user_id][i].c_str());
+        
+        send_message.number_of_messages--;
+        /* Send received datagram back to the client */
+        if (sendto(sock, (ServerMessage *) &send_message, sizeof(send_message), 0,
+                   (struct sockaddr *) &echoClntAddr, sizeof(echoClntAddr)) != sizeof(send_message))
+            DieWithError("SERVER: sendto() sent a different number of bytes than expected");
+        
+        
+        
+    }
+    
+    strcpy(send_message.message, "Display successful");
+    
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * this takes the index message user entered to delete
+ * @param send_message the server message
+ * @param recieve_message the client message
+ * @return the server message
+ */
+ServerMessage delete_message(ServerMessage send_message, ClientMessage recieve_message){
+    
+    int index = recieve_message.request_id;
+    int user_id = recieve_message.UserID;
+    int size = posted_index[user_id];
+    int i;
+    bool deleted = false;
+    
+    /* delete message at client chosen index */
+    if(posted_messages[user_id][index] != ""){
+        posted_messages[user_id][index] = "";
+        deleted = true;
+    }
+    
+    /* difference between index and number of messages of user has */
+    int difference = size - index;
+    cout << "size: " << size << endl;
+    cout << "difference: " << difference << endl;
+    cout << "index: " << index << endl;
+    
+    /* messages that need to be rearranged is the difference number */
+    for(i = 0; i < difference; i++){
+        
+        string temp = posted_messages[user_id][index + 1];
+        posted_messages[user_id][index] = temp;
+        posted_messages[user_id][index + 1] = "";
+        index++;
+    }
+    
+    /* decrement the posted_index[user_id] */
+    if(deleted)
+        posted_index[user_id]--;
+    
+    send_message.UserID = recieve_message.UserID;
+    strcpy(send_message.message, "Delete successful");
+    
+    return send_message;
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * this functions unfollows a leader from client list
+ * @param send_message the server message
+ * @param recieve_message the client message
+ * @return send_message the server message
+ */
+ServerMessage unfollow_leader(ServerMessage send_message, ClientMessage recieve_message){
+    
+    int leader_id = recieve_message.LeaderID;
+    int user_id = recieve_message.UserID;
+    int i;
+   
+    
+    for(i = 0; i < 11; i++){
+        
+        if(following_list[user_id][i] == leader_id){
+            following_list[user_id][i] = 0;
+        }
+    }
+    
+    for(i = 0; i < 11; i++){
+        
+        send_message.following[i] = 0;
+        if(following_list[user_id][i] != 0){
+            send_message.following[i] = following_list[user_id][i];
+        }
+    }
+    strcpy(send_message.message, "Unfollow successful");
+    return send_message;
+}
+
+
