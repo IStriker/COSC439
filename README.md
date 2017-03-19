@@ -4,6 +4,8 @@ Date: 3/18/2017
 
 #Description:
 This program is not complete: (delete does not work)
+This is a multithreaded program, which allows mutliple clients
+to connect to the server and do the described below operations
 
 #Compiling:
 Client program: UDPClient.cpp
