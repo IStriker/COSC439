@@ -1,0 +1,1 @@
+This repository contains socket programming projects from my COSC439 (Computing Network Principles) course.
