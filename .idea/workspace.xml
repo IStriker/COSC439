@@ -10,6 +10,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="069dc3e3-bfc0-4127-9c2d-e9ef7ea1e9bb" name="Default" comment="">
+      <change type="DELETED" beforePath="$PROJECT_DIR$/HandleTCPClient.c" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/TCPEchoClient.c" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/TCPEchoServer.c" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/TCPEchoServer.h" afterPath="" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
     </list>
     <ignored path="$PROJECT_DIR$/cmake-build-debug/" />
@@ -113,16 +117,6 @@
               <option name="myItemId" value="COSC439" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="COSC439" />
-              <option name="myItemType" value="com.jetbrains.cidr.projectView.CidrFilesViewHelper$MyProjectTreeStructure$1" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="COSC439" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
             <PATH_ELEMENT>
               <option name="myItemId" value="Project2" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
@@ -139,6 +133,16 @@
             </PATH_ELEMENT>
             <PATH_ELEMENT>
               <option name="myItemId" value="Project1" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="COSC439" />
+              <option name="myItemType" value="com.jetbrains.cidr.projectView.CidrFilesViewHelper$MyProjectTreeStructure$1" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="COSC439" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
           </PATH>
@@ -348,12 +352,12 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1490899346456</updated>
-      <workItem from="1490899347802" duration="1239000" />
+      <workItem from="1490899347802" duration="1387000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="1239000" />
+    <option name="totallyTimeSpent" value="1387000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="10" y="43" width="1260" height="669" extended-state="0" />
