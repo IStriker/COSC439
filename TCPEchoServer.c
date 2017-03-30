@@ -4,7 +4,6 @@
 #include <stdlib.h>     /* for atoi() and exit() */
 #include <string.h>     /* for memset() */
 #include <unistd.h>     /* for close() */
-#include "TCPEchoServer.h"
 
 #define MAXPENDING 5    /* Maximum outstanding connection requests */
 
@@ -63,5 +62,4 @@ int main(int argc, char *argv[])
         HandleTCPClient(clntSock);
     }
     /* NOT REACHED */
-
 }
