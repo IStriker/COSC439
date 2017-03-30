@@ -4,6 +4,9 @@
 #include <stdlib.h>     /* for atoi() and exit() */
 #include <string.h>     /* for memset() */
 #include <unistd.h>     /* for close() */
+#include <iostream>
+
+using namespace std;
 
 #define RCVBUFSIZE 32   /* Size of receive buffer */
 
@@ -58,16 +61,16 @@ int main(int argc, char *argv[])
 
     /* Receive the same string back from the server */
     totalBytesRcvd = 0;
-    printf("Received: ");                /* Setup to print the echoed string */
+    cout << "Reieved: ";                /* Setup to print the echoed string */
     while (totalBytesRcvd < echoStringLen)
     {
         /* Receive up to the buffer size (minus 1 to leave space for
            a null terminator) bytes from the sender */
         if ((bytesRcvd = recv(sock, echoBuffer, RCVBUFSIZE - 1, 0)) <= 0)
             DieWithError("recv() failed or connection closed prematurely");
-        totalBytesRcvd += bytesRcvd;   /* Keep tally of total bytes */
-        echoBuffer[bytesRcvd] = '\0';  /* Terminate the string! */
-        printf(echoBuffer);            /* Print the echo buffer */
+        totalBytesRcvd += bytesRcvd;            /* Keep tally of total bytes */
+        echoBuffer[bytesRcvd] = '\0';           /* Terminate the string! */
+        cout << echoBuffer << endl;             /* Print the echo buffer */
     }
 
     printf("\n");    /* Print a final linefeed */
@@ -75,3 +78,4 @@ int main(int argc, char *argv[])
     close(sock);
     exit(0);
 }
+
