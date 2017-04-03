@@ -11,6 +11,7 @@ using namespace std;
 #define RCVBUFSIZE 32   /* Size of receive buffer */
 
 void DieWithError(char *errorMessage);  /* Error handling function */
+void menu();                            /* Display menu for user */
 
 int main(int argc, char *argv[])
 {
@@ -79,3 +80,44 @@ int main(int argc, char *argv[])
     exit(0);
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * This function displays the menu to the user
+ * to choose an option from
+ *
+ */
+void menu(){
+
+    start_menu:
+
+    cout << "-------------------------------------------------------------------------------" << endl;
+    cout << "-------------------------------------------------------------------------------" << endl << endl;
+
+    int user_choice;
+
+    cout << "Please choose one of the following choices: " << endl;
+    cout << "1. Receive today's news\n2. Search keyword news\n3. Quit program" << endl;
+    cin >> user_choice;
+
+    switch(user_choice){
+
+        case 1: /* todays news */
+            recieve_todays_news();
+            break;
+
+        case 2: /* search keyword */
+            search_keyword();
+            break;
+
+        case 3: /* quit the program */
+            exit(1);
+            break;
+
+        default:
+            cout << "Invalid choice, please try again" << endl;
+            goto start_menu;
+
+    }
+
+}
