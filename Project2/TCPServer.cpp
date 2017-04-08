@@ -5,11 +5,13 @@
 #include <string.h>     /* for memset() */
 #include <unistd.h>     /* for close() */
 #include "TCPEchoServer.h"
-#include <iostream>
+#include <iostream>     /* for cout, cin */
+
+
+#define MAXPENDING 5    /* Maximum outstanding connection requests */
 
 using namespace std;
 
-#define MAXPENDING 5    /* Maximum outstanding connection requests */
 
 void DieWithError(char *errorMessage);  /* Error handling function */
 void HandleTCPClient(int clntSocket);   /* TCP client handling function */

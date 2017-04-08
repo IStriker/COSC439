@@ -12,19 +12,13 @@
 
 using namespace std;
 
-/* client message struct */
-typedef struct {
 
-    enum {
-        NewsFeed, Search
-    } request_type;
 
-} ClientMessage;
 
-typedef struct{
 
-   string message;
+/* client message */
+string client_message;
 
-}ServerMessage;
-
+/* server message */
+string server_message;
 

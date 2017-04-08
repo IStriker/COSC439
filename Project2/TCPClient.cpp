@@ -4,14 +4,17 @@
 #include <stdlib.h>     /* for atoi() and exit() */
 #include <string.h>     /* for memset() */
 #include <unistd.h>     /* for close() */
-#include <iostream>
+#include <iostream>     /* for cout, cin*/
 
-using namespace std;
 
 #define RCVBUFSIZE 32   /* Size of receive buffer */
 
+using namespace std;
+
+
 void DieWithError(char *errorMessage);  /* Error handling function */
-void menu();                            /* Display menu for user */
+string menu();        /* Display menu for user */
+string search_keyword();
 
 int main(int argc, char *argv[])
 {
@@ -55,6 +58,8 @@ int main(int argc, char *argv[])
         DieWithError("connect() failed");
 
     echoStringLen = strlen(echoString);          /* Determine input length */
+    string message = menu();
+    strcpy(echoString, message.c_str());
 
     /* Send the string to the server */
     if (send(sock, echoString, echoStringLen, 0) != echoStringLen)
@@ -62,19 +67,21 @@ int main(int argc, char *argv[])
 
     /* Receive the same string back from the server */
     totalBytesRcvd = 0;
-    cout << "Reieved: ";                /* Setup to print the echoed string */
-    while (totalBytesRcvd < echoStringLen)
+    cout << "Received: ";                /* Setup to print the echoed string */
+    while (true)//totalBytesRcvd < echoStringLen)
     {
         /* Receive up to the buffer size (minus 1 to leave space for
            a null terminator) bytes from the sender */
-        if ((bytesRcvd = recv(sock, echoBuffer, RCVBUFSIZE - 1, 0)) <= 0)
-            DieWithError("recv() failed or connection closed prematurely");
+        if ((bytesRcvd = recv(sock, echoBuffer, RCVBUFSIZE - 1, 0)) <= 0) {
+            //DieWithError("recv() failed or connection closed prematurely");
+            break;
+        }
         totalBytesRcvd += bytesRcvd;            /* Keep tally of total bytes */
         echoBuffer[bytesRcvd] = '\0';           /* Terminate the string! */
-        cout << echoBuffer << endl;             /* Print the echo buffer */
+        cout << echoBuffer;             /* Print the echo buffer */
     }
 
-    printf("\n");    /* Print a final linefeed */
+    cout << "\n";    /* Print a final linefeed */
 
     close(sock);
     exit(0);
@@ -87,7 +94,7 @@ int main(int argc, char *argv[])
  * to choose an option from
  *
  */
-void menu(){
+string menu(){
 
     start_menu:
 
@@ -95,19 +102,21 @@ void menu(){
     cout << "-------------------------------------------------------------------------------" << endl << endl;
 
     int user_choice;
+    string message;
 
     cout << "Please choose one of the following choices: " << endl;
     cout << "1. Receive today's news\n2. Search keyword news\n3. Quit program" << endl;
+    cout << "Enter you choice: ";
     cin >> user_choice;
 
     switch(user_choice){
 
         case 1: /* todays news */
-            recieve_todays_news();
+            message = "news feed";
             break;
 
         case 2: /* search keyword */
-            search_keyword();
+            message = search_keyword();
             break;
 
         case 3: /* quit the program */
@@ -120,4 +129,14 @@ void menu(){
 
     }
 
+    return message;
+
+}
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+string search_keyword(){
+
+    return "";
 }
