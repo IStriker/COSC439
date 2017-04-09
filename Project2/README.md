@@ -9,8 +9,8 @@ items to receive from server or the whole daily news file.
 to connect to the server and do the described below operations
 
 #Compiling:
-Client program: UDPClient.cpp
-Server program: UDPServer.cpp
+Client program: TCPClient.cpp
+Server program: TCPServer.cpp
 
 Example Compiling client: g++ -o TCPClient TCPClient.cpp DieWithError.cpp
 Example Compiling server: g++ -o TCPServer TCPServer.cpp HandleTCPClient.cpp DieWithError.cpp
