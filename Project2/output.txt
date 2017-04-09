@@ -1,6 +1,6 @@
 #item The firm that starts work at 9.06am
 Source: BBC News/Users/abdulaldhaheri/Desktop/COSC439/COSC439/Project2/11-21-2016.txt
-By Will Smale, Business reporter 
+By Will Smale, Business reporter
 There aren't many companies that insist staff start work every day at such an oddly specific time as Pivotal Software.
 Employees at the US firm's 20 global offices all have to be at work and ready to go at exactly 9.06am.
 At that precise time a cowbell is rung, or a gong is hit, and all workers gather for a brief stand-up meeting that lasts for between five and 10 minutes.
@@ -10,7 +10,7 @@ Pivotal's founder and chief executive Rob Mee says it is all about making the wo
 "So we thought, 'let's provide breakfast for everyone.' It gives them a reason to get here."
 
 #item Michigan up one spot to third in AP poll
-Source: http://www.detroitnews.com 
+Source: http://www.detroitnews.com
 by Detroit News staff and wires
 Michigan moved up one spot to third in this week’s Associated Press college football poll following a 20-10 victory over Indiana.
 The Wolverines (10-1) close the regular season this Saturday at Ohio State (10-1).
@@ -38,11 +38,11 @@ Symantec has struggled to grow, even as computer security emerged as a top conce
 In January, Symantec sold its Veritas data-storage unit to Carlyle Group for $7.4 billion.
 —Dana Cimilluca contributed to this article.
 
-#item Just how partisan is Facebook's fake news? We tested it. 
+#item Just how partisan is Facebook's fake news? We tested it.
 Source: http://pcworld.com
-By Mark Hachman, Senior Editor, PCWorld 
+By Mark Hachman, Senior Editor, PCWorld
 Far more spin and fake news is pushed at Trump supporters.
 It was only a few minutes after my imaginary Trump supporter “Todd White” began exploring Facebook that he learned filmmaker Michael Moore was staging a coup d’etat against president-elect Donald Trump. Todd also learned that Trump won the popular vote. And that there were people paid to protest at Trump rallies.
-None of that is true, of course. That’s the sort of fake news that’s being disseminated by Facebook—bogus content that many believe was written by partisan groups to influence the election. But how do Facebook users end up seeing it? We decided to test who’s seeing this partisan fake news, who’s supplying it, and just how obvious it is. 
-We began our investigation last Monday, as the fake-news controversy gained momentum—and Facebook and Google began blocking sites that traffic in disinformation from their respective advertising networks. We set up two Facebook accounts, one favoring Hillary Clinton, and the other supporting Trump, then let Facebook recommend a series of news pages. In effect, we were asking Facebook to be our news service. 
+None of that is true, of course. That’s the sort of fake news that’s being disseminated by Facebook—bogus content that many believe was written by partisan groups to influence the election. But how do Facebook users end up seeing it? We decided to test who’s seeing this partisan fake news, who’s supplying it, and just how obvious it is.
+We began our investigation last Monday, as the fake-news controversy gained momentum—and Facebook and Google began blocking sites that traffic in disinformation from their respective advertising networks. We set up two Facebook accounts, one favoring Hillary Clinton, and the other supporting Trump, then let Facebook recommend a series of news pages. In effect, we were asking Facebook to be our news service.
 Then we sat back and watched the news roll in. We looked closely at each post to determine whether it was real news, fake news, or something in between.
