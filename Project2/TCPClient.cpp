@@ -71,6 +71,10 @@ int main(int argc, char *argv[])
         string message = menu();
         cout << "message: " << message << endl;
 
+        /* if user chose to exit program */
+        if(message == "exit")
+            break;
+
         /* Send the string to the server */
         if (send(sock, message.c_str(), strlen(message.c_str()), 0) != strlen(message.c_str()))
             DieWithError("send() sent a different number of bytes than expected");
@@ -83,18 +87,15 @@ int main(int argc, char *argv[])
             /* Receive up to the buffer size (minus 1 to leave space for
                a null terminator) bytes from the sender */
             if ((bytesRcvd = recv(sock, echoBuffer, RCVBUFSIZE - 1, 0)) <= 0) {
-                //DieWithError("recv() failed or connection closed prematurely");
                 break;
             }
             totalBytesRcvd += bytesRcvd;            /* Keep tally of total bytes */
-            //cout << "bytes recieved: " << bytesRcvd << endl;
             echoBuffer[bytesRcvd] = '\0';           /* Terminate the string! */
             cout << echoBuffer;             /* Print the echo buffer */
 
         }
     }
 
-    cout << "\n";    /* Print a final linefeed */
 
     close(sock);
     exit(0);
@@ -117,10 +118,13 @@ string menu(){
     int user_choice;
     string message;
 
+    /* ask user, read user input and clear buffer */
     cout << "Please choose one of the following choices: " << endl;
     cout << "1. Receive today's news\n2. Search keyword news\n3. Quit program" << endl;
     cout << "Enter you choice: ";
     cin >> user_choice;
+    cin.clear();
+    fflush(stdin);
 
     switch(user_choice){
 
@@ -133,7 +137,7 @@ string menu(){
             break;
 
         case 3: /* quit the program */
-            exit(1);
+            message = "exit";
             break;
 
         default:
@@ -149,9 +153,23 @@ string menu(){
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/**
+ * This function asks user for news topic they want to search
+ *
+ * @return string of the topic
+ */
 string search_keyword(){
 
-    return "";
+    string keyword;
+
+    /* ask user, read user input and clear buffer */
+    cout << "Please enter keyword you want to search: ";
+    cin >> keyword;
+    cin.clear();
+    fflush(stdin);
+
+
+    return keyword;
 }
 
 
